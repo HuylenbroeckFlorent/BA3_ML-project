@@ -1,3 +1,31 @@
+#library(tidyverse) # utility functions
+library(rpart) # for regression trees
+library(randomForest) # for random forests
+
+dlearn <- read.csv('data/Dlearn.csv')
+sample <- read.csv('data/sample.csv')
+xtest <- read.csv('data/Xtest.csv')
+
+lm.fit = lm(Transaction ~ CategoryIII, data=Dlearn)
+summary(lm.fit)
+predicted <- predict(lm.fit, newdata=xtest)
+predicted
+for(i in 1:length(predicted)){
+  if (predicted[i]<0.5){
+    predicted[i]=0
+  }
+  else{
+    predicted[i]=1
+  }
+}
+
+predicted
+
+submission <- data.frame('id' = xtest$id, 'Transaction' = predicted)
+
+write.csv(predicted, 'submission.csv')
+
+
 crossvalid <- function (set,predictor){
   set=set[sample(nrow(set)),]
   
