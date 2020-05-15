@@ -1,6 +1,7 @@
 #library(tidyverse) # utility functions
 library(rpart) # for regression trees
 library(randomForest) # for random forests
+library(rpart.plot)
 
 dlearn <- read.csv('data/Dlearn.csv')
 sample <- read.csv('data/sample.csv')
@@ -128,8 +129,8 @@ powerset = function(s){ #https://stackoverflow.com/questions/18715580/algorithm-
 }
 
 #brute force for best linear model (takes time)
-brute_force_lm <- function(){
-  pwset <- powerset(colnames(dlearn_transformed[c(-12,-13,-14,-18)]))
+brute_force_glm <- function(){
+  pwset <- powerset(colnames(dlearn_transformed[c(-12,-13,-18)]))
   
   best <- c(0,"")
   
@@ -146,17 +147,75 @@ brute_force_lm <- function(){
       }
       
     }
-    tmp_score <- crossvalid(function(x) glm(as.formula(formula), data=x, family=binomial), 10, TRUE)
+    tmp_score <- crossvalid(function(x) glm(as.formula(formula), data=x, family=binomial), 5, TRUE)
     
     if(tmp_score > best[1]){
-      best <- c(tmp_score, formula)
-      print(best)
+      best <- c(tmp_score, formula, best)
+      print(best[2])
     }
   }
   write.csv(best, 'best.csv')
-  submit_prediction((function(x) glm(as.formula(best[2]), data=x)))
+  submit_prediction((function(x) glm(as.formula(best[2]), data=x, family=binomial)))
 }
 
-# brute_force_lm()
+brute_force_lm_higher_dim <- function(){
+  pwset <- powerset(c("CategoryI",
+                      "I(CategoryI^2)",
+                      "CategoryI_Duration",
+                      "I(CategoryI_Duration^2)",
+                      "CategoryII",
+                      "I(CategoryII^2)",
+                      "CategoryII_Duration",
+                      "I(CategoryII_Duration^2)",
+                      "CategoryIII",
+                      "I(CategoryIII^2)",
+                      "CategoryIII_Duration",
+                      "I(CategoryIII_Duration^2)",
+                      "Bounce_Rate",
+                      "I(Bounce_Rate^2)",
+                      "Exit_Rate",
+                      "I(Exit_Rate^2)",
+                      "Page_Value",
+                      "I(Page_Value^2)",
+                      "Month"))
+  
+  best <- c(0,"")
+  
+  for(i in sample(2:length(pwset))) {
+    if(i==2 || i%%1000==0){
+      print(paste(i,'/',length(pwset)))
+    }
+    formula <- "Transaction ~"
+    for(j in 1:length(pwset[[i]])){
+      if(j==length(pwset[[i]])){
+        formula <- paste(formula,pwset[[i]][j])
+      }else{
+        formula <- paste(formula,pwset[[i]][j],"+")
+      }
+      
+    }
+    tmp_score <- crossvalid(function(x) lm(as.formula(formula), data=x), 5, TRUE)
+    
+    if(tmp_score > best[1]){
+      best <- c(tmp_score, formula, best)
+      print(best[2])
+      write.csv(best, 'best.csv')
+      submit_prediction((function(x) lm(as.formula(best[2]), data=x)))
+    }
+  }
+}
 
-submit_prediction(function(x) glm(as.formula(Transaction ~ CategoryI + CategoryI_Duration + CategoryII + CategoryII_Duration + CategoryIII + CategoryIII_Duration + Bounce_Rate + Exit_Rate + Page_Value), data=x, family=binomial))
+dlearn_transformed$OS <- factor(dlearn_transformed$OperatingSystems, order = TRUE, levels = c(6,3,7,1,5,2,4,8))
+dlearn_transformed$Browser <- factor(dlearn_transformed$Browser, order = TRUE, levels = c(9,3,6,7,1,2,8,11,4,5,10,13,12))
+dlearn_transformed$Region <- factor(dlearn_transformed$Region, order = TRUE, levels = c(8,6,3,4,7,1,5,2,9))
+dlearn_transformed$TrafficType <- factor(dlearn_transformed$TrafficType, order = TRUE, levels = c(12,15,17,18,13,19,3,9,1,6,4,14,11,10,5,2,20,8,7,16))
+
+tree.test <- rpart(Transaction ~ ., data=dlearn_transformed, method="class")
+rpart.plot(tree.test)
+
+tree.pred <- predict(tree.test, newdata=dlearn_transformed, type="class")
+
+summary(tree.pred)
+
+submit_prediction(function(x) rpart(Transaction ~ ., data=x, method="class"))
+
