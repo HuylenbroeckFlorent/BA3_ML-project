@@ -3,13 +3,15 @@ library(rpart) # for regression trees
 library(randomForest) # for random forests
 library(rpart.plot)
 library(dplyr)
+library(ipred)
+library(plyr)
+library(caret)
 
 ###check if needed
 library(ggplot2)
 library(gmodels)
 library(corrplot)
 library(caret)
-library(ipred)
 library(fpc)
 library(data.table)
 library(cluster)
@@ -238,7 +240,7 @@ dlearn_transformed$Browser <- factor(dlearn_transformed$Browser, order = TRUE, l
 dlearn_transformed$Region <- factor(dlearn_transformed$Region, order = TRUE, levels = c(8,6,3,4,7,1,5,2,9))
 dlearn_transformed$TrafficType <- factor(dlearn_transformed$TrafficType, order = TRUE, levels = c(12,15,17,18,13,19,3,9,1,6,4,14,11,10,5,2,20,8,7,16))
 
-library(plyr)
+
 
 dlearn_transformed$Month <- factor(dlearn_transformed$Month, order = TRUE, levels =c('Feb', 'Mar', 'May', 'June','Jul', 'Aug', 'Sep','Oct', 'Nov','Dec'))
 dlearn_transformed$Month_Numeric <-mapvalues(dlearn_transformed$Month, from = c('Feb', 'Mar', 'May', 'June','Jul', 'Aug', 'Sep','Oct', 'Nov','Dec'), to = c(1,2,3,4,5,6,7,8,9,10))
@@ -278,7 +280,7 @@ dlearn_transformed_clust <- dlearn_transformed_norm[-c(11,16:19)]
 dlearn_transformed_class <- dlearn_transformed[-c(19:22)]
 
 set.seed(1984)
-library(caret)
+
 training <- createDataPartition(dlearn_transformed_class$Transaction, p = 0.8, list=FALSE)
 
 train_data <- dlearn_transformed_class[training,]
@@ -353,7 +355,7 @@ k_med_clust$objective
 
 k_med_clust$clusinfo
 
-t1b <- table(k_med_clust$clustering, dlearn_transformed_norm$Revenue)
+t1b <- table(k_med_clust$clustering, dlearn_transformed_norm$Transaction)
 t1b
 
 plot(PC1~PC2, data=shopper_components_data, 
@@ -372,3 +374,4 @@ recall_kmed
 
 F1_kmed<- 2*presicion_kmed*recall_kmed/(presicion_kmed+recall_kmed)
 F1_kmed
+
