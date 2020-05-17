@@ -26,7 +26,7 @@ dlearn_transformed <- transform(dlearn,
                                 VisitorType=as.factor(VisitorType),                             #16
                                 Weekend=as.factor(Weekend),                                     #17
                                 Transaction=as.logical(Transaction))                            #18
-preds <- colnames(Dlearn)
+preds <- colnames(dlearn)
 
 submit_prediction <- function(model){
   sub.fit <- model(dlearn)
@@ -205,7 +205,7 @@ brute_force_lm_higher_dim <- function(){
   }
 }
 
-dlearn_transformed$OS <- factor(dlearn_transformed$OperatingSystems, order = TRUE, levels = c(6,3,7,1,5,2,4,8))
+dlearn_transformed$OS <- factor(dlearn_transformed$OS, order = TRUE, levels = c(6,3,7,1,5,2,4,8))
 dlearn_transformed$Browser <- factor(dlearn_transformed$Browser, order = TRUE, levels = c(9,3,6,7,1,2,8,11,4,5,10,13,12))
 dlearn_transformed$Region <- factor(dlearn_transformed$Region, order = TRUE, levels = c(8,6,3,4,7,1,5,2,9))
 dlearn_transformed$TrafficType <- factor(dlearn_transformed$TrafficType, order = TRUE, levels = c(12,15,17,18,13,19,3,9,1,6,4,14,11,10,5,2,20,8,7,16))
