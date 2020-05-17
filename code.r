@@ -375,3 +375,4 @@ recall_kmed
 F1_kmed<- 2*presicion_kmed*recall_kmed/(presicion_kmed+recall_kmed)
 F1_kmed
 
+#submit_prediction((function(x) lm(Transaction~CategoryIII, data=x)))
