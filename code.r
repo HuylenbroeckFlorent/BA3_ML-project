@@ -219,3 +219,145 @@ summary(tree.pred)
 
 submit_prediction(function(x) rpart(Transaction ~ ., data=x, method="class"))
 
+################ K-mean ################
+## 5.1 Converting our Categorical Variables to Ordinal Factors. ##
+dlearn_transformed$OS <- factor(dlearn_transformed$OS, order = TRUE, levels = c(6,3,7,1,5,2,4,8))
+dlearn_transformed$Browser <- factor(dlearn_transformed$Browser, order = TRUE, levels = c(9,3,6,7,1,2,8,11,4,5,10,13,12))
+dlearn_transformed$Region <- factor(dlearn_transformed$Region, order = TRUE, levels = c(8,6,3,4,7,1,5,2,9))
+dlearn_transformed$TrafficType <- factor(dlearn_transformed$TrafficType, order = TRUE, levels = c(12,15,17,18,13,19,3,9,1,6,4,14,11,10,5,2,20,8,7,16))
+
+library(plyr)
+
+dlearn_transformed$Month <- factor(dlearn_transformed$Month, order = TRUE, levels =c('Feb', 'Mar', 'May', 'June','Jul', 'Aug', 'Sep','Oct', 'Nov','Dec'))
+dlearn_transformed$Month_Numeric <-mapvalues(dlearn_transformed$Month, from = c('Feb', 'Mar', 'May', 'June','Jul', 'Aug', 'Sep','Oct', 'Nov','Dec'), to = c(1,2,3,4,5,6,7,8,9,10))
+
+
+dlearn_transformed$VisitorType <- factor(dlearn_transformed$VisitorType, order = TRUE, levels = c('Returning_Visitor', 'Other', 'New_Visitor'))
+dlearn_transformed$VisitorType_Numeric <-mapvalues(dlearn_transformed$VisitorType, from = c("Returning_Visitor", "Other", "New_Visitor"), to = c(1,2,3))
+
+library(dplyr)
+
+## 5.2 Creating Appropriate Dummy Variables ##
+dlearn_transformed <- dlearn_transformed %>%
+  mutate(Weekend_binary = ifelse(Weekend == "FALSE",0,1))
+
+## 5.3 Normalizing Numerical Data ##
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+## Creating a copy of the original data.
+dlearn_transformed_norm <- dlearn_transformed
+
+## Normalizing our 10 variables.
+dlearn_transformed_norm$Administrative <- normalize(dlearn_transformed$Administrative)
+dlearn_transformed_norm$Administrative_Duration <- normalize(dlearn_transformed$Administrative_Duration)
+dlearn_transformed_norm$Informational <- normalize(dlearn_transformed$Informational_Duration)
+dlearn_transformed_norm$Informational_Duration <- normalize(dlearn_transformed$Administrative)
+dlearn_transformed_norm$ProductRelated <- normalize(dlearn_transformed$ProductRelated)
+dlearn_transformed_norm$ProductRelated_Duration <- normalize(dlearn_transformed$ProductRelated_Duration)
+dlearn_transformed_norm$BounceRates <- normalize(dlearn_transformed$BounceRates)
+dlearn_transformed_norm$ExitRates <- normalize(dlearn_transformed$ExitRates)
+dlearn_transformed_norm$PageValues <- normalize(dlearn_transformed$PageValues)
+dlearn_transformed_norm$SpecialDay <- normalize(dlearn_transformed$SpecialDay)
+
+dlearn_transformed_clust <- dlearn_transformed_norm[-c(11,16:19)]
+
+## 5.2 Creating Test and Train Data ##
+dlearn_transformed_class <- dlearn_transformed[-c(19:22)]
+
+set.seed(1984)
+library(caret)
+training <- createDataPartition(dlearn_transformed_class$Revenue, p = 0.8, list=FALSE)
+
+train_data <- dlearn_transformed_class[training,]
+test_data <- dlearn_transformed_class[-training,]
+
+## 6. Clustering ##
+## 6.1 K-Means Clustering ##
+summary(dlearn_transformed_clust)
+
+str(dlearn_transformed_clust)
+
+k_mean_clust <- kmeans(dlearn_transformed_clust, centers = 2, iter.max = 100)
+
+## Size of our clusters
+k_mean_clust$size
+
+## Our cluster centers (means)
+k_mean_clust$centers
+
+## Between cluster sum of squares
+k_mean_clust$betweenss
+
+## Total cluster sum of squares
+k_mean_clust$totss
+
+## Whithin clusters sum of squares
+k_mean_clust$betweenss / k_mean_clust$totss
+
+t1 <- table(k_mean_clust$cluster, dlearn_transformed_norm$Revenue)
+t1
+
+pca_cluster_data <- prcomp(dlearn_transformed_clust[c(1:10)], scale. = TRUE)
+plot(pca_cluster_data, main = "Principal Components")
+
+shopper_components_data <- as.data.frame(pca_cluster_data$x)
+
+## Show first two PCs for out shoppers
+head(shopper_components_data[1:2], 5)
+
+## Plotting
+plot(PC1~PC2, data=shopper_components_data,
+     cex = .1, lty = "solid")
+text(PC1~PC2, data=shopper_components_data, 
+     labels=rownames(dlearn_transformed_clust[c(1:10)]),
+     cex=.8)
+
+plot(PC1~PC2, data=shopper_components_data, 
+     main= "Online Shopper Intent: PC1 vs PC2 - K-Means Clusters",
+     cex = .1, lty = "solid", col=k_mean_clust$cluster)
+text(PC1~PC2, data=shopper_components_data, 
+     labels=rownames(dlearn_transformed_clust[c(1:10)]),
+     cex=.8, col=k_mean_clust$cluster)
+
+presicion_kmeans<- t1[1,1]/(sum(t1[1,]))
+recall_kmeans<- t1[1,1]/(sum(t1[,1]))
+## Precision
+presicion_kmeans
+
+recall_kmeans
+
+F1_kmeans<- 2*presicion_kmeans*recall_kmeans/(presicion_kmeans+recall_kmeans)
+F1_kmeans
+
+## 6.2 K-Medoids Clustering ##
+k_med_clust <- pam(x = dlearn_transformed_clust, k = 2)
+
+k_med_clust$id.med
+
+k_med_clust$mediods
+
+k_med_clust$objective
+
+k_med_clust$clusinfo
+
+t1b <- table(k_med_clust$clustering, dlearn_transformed_norm$Revenue)
+t1b
+
+plot(PC1~PC2, data=shopper_components_data, 
+     main= "Online Shopper Intent: PC1 vs PC2 - K-Medoids Clusters",
+     cex = .1, lty = "solid", col=k_med_clust$clustering)
+text(PC1~PC2, data=shopper_components_data, 
+     labels=rownames(dlearn_transformed_clust[c(1:10)]),
+     cex=.8, col=k_med_clust$clustering)
+
+presicion_kmed<- t1b[1,1]/(sum(t1b[1,]))
+recall_kmed<- t1b[1,1]/(sum(t1b[,1]))
+## Precision
+presicion_kmed
+
+recall_kmed
+
+F1_kmed<- 2*presicion_kmed*recall_kmed/(presicion_kmed+recall_kmed)
+F1_kmed
