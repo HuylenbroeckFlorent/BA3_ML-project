@@ -2,6 +2,18 @@
 library(rpart) # for regression trees
 library(randomForest) # for random forests
 library(rpart.plot)
+library(dplyr)
+
+###check if needed
+library(ggplot2)
+library(gmodels)
+library(corrplot)
+library(caret)
+library(ipred)
+library(fpc)
+library(data.table)
+library(cluster)
+
 
 dlearn <- read.csv('data/Dlearn.csv')
 sample <- read.csv('data/sample.csv')
@@ -235,7 +247,6 @@ dlearn_transformed$Month_Numeric <-mapvalues(dlearn_transformed$Month, from = c(
 dlearn_transformed$VisitorType <- factor(dlearn_transformed$VisitorType, order = TRUE, levels = c('Returning_Visitor', 'Other', 'New_Visitor'))
 dlearn_transformed$VisitorType_Numeric <-mapvalues(dlearn_transformed$VisitorType, from = c("Returning_Visitor", "Other", "New_Visitor"), to = c(1,2,3))
 
-library(dplyr)
 
 ## 5.2 Creating Appropriate Dummy Variables ##
 dlearn_transformed <- dlearn_transformed %>%
@@ -250,15 +261,15 @@ normalize <- function(x) {
 dlearn_transformed_norm <- dlearn_transformed
 
 ## Normalizing our 10 variables.
-dlearn_transformed_norm$Administrative <- normalize(dlearn_transformed$Administrative)
-dlearn_transformed_norm$Administrative_Duration <- normalize(dlearn_transformed$Administrative_Duration)
-dlearn_transformed_norm$Informational <- normalize(dlearn_transformed$Informational_Duration)
-dlearn_transformed_norm$Informational_Duration <- normalize(dlearn_transformed$Administrative)
-dlearn_transformed_norm$ProductRelated <- normalize(dlearn_transformed$ProductRelated)
-dlearn_transformed_norm$ProductRelated_Duration <- normalize(dlearn_transformed$ProductRelated_Duration)
-dlearn_transformed_norm$BounceRates <- normalize(dlearn_transformed$BounceRates)
-dlearn_transformed_norm$ExitRates <- normalize(dlearn_transformed$ExitRates)
-dlearn_transformed_norm$PageValues <- normalize(dlearn_transformed$PageValues)
+dlearn_transformed_norm$CategoryI <- normalize(dlearn_transformed$CategoryI)
+dlearn_transformed_norm$CategoryI_Duration <- normalize(dlearn_transformed$CategoryI_Duration)
+dlearn_transformed_norm$CategoryII <- normalize(dlearn_transformed$CategoryII_Duration)
+dlearn_transformed_norm$CategoryII_Duration <- normalize(dlearn_transformed$CategoryI)
+dlearn_transformed_norm$CategoryIII <- normalize(dlearn_transformed$CategoryIII)
+dlearn_transformed_norm$CategoryIII_Duration <- normalize(dlearn_transformed$CategoryIII_Duration)
+dlearn_transformed_norm$Bounce_Rate <- normalize(dlearn_transformed$Bounce_Rate)
+dlearn_transformed_norm$Exit_Rate <- normalize(dlearn_transformed$Exit_Rate)
+dlearn_transformed_norm$Page_Value <- normalize(dlearn_transformed$Page_Value)
 dlearn_transformed_norm$SpecialDay <- normalize(dlearn_transformed$SpecialDay)
 
 dlearn_transformed_clust <- dlearn_transformed_norm[-c(11,16:19)]
@@ -268,7 +279,7 @@ dlearn_transformed_class <- dlearn_transformed[-c(19:22)]
 
 set.seed(1984)
 library(caret)
-training <- createDataPartition(dlearn_transformed_class$Revenue, p = 0.8, list=FALSE)
+training <- createDataPartition(dlearn_transformed_class$Transaction, p = 0.8, list=FALSE)
 
 train_data <- dlearn_transformed_class[training,]
 test_data <- dlearn_transformed_class[-training,]
@@ -296,7 +307,7 @@ k_mean_clust$totss
 ## Whithin clusters sum of squares
 k_mean_clust$betweenss / k_mean_clust$totss
 
-t1 <- table(k_mean_clust$cluster, dlearn_transformed_norm$Revenue)
+t1 <- table(k_mean_clust$cluster, dlearn_transformed_norm$Transaction)
 t1
 
 pca_cluster_data <- prcomp(dlearn_transformed_clust[c(1:10)], scale. = TRUE)
