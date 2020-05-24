@@ -2,6 +2,7 @@
 
 \usepackage[margin=1in]{geometry}
 \usepackage{hyperref}
+\usepackage{graphicx}
 
 \title{Machine Learning - Project 2020 report\\
 \small Predicting online purchasing intention}
@@ -14,16 +15,16 @@ Laurent BOSSART}
 \section*{Introduction}
 The goal of this project was to produce on the basis of various predictors the best model to predict if a session on an e-commerce website will lead to a purchase.
 This project took the form of a competition hosted on \url{ https://www.kaggle.com}. \\
-In groups of two, we had been given two dataset, one for training and one for testing, a short explaination of the different predictors and a way to measure our model's efficiency (the \emph{F-1 score}). We were able to submit five model per day.\\
+In groups of two, we have been given two datasets, one for training and one for testing, a short explaination of the different predictors and the way to measure our model efficiency (the \emph{F-1 score}). We were able to submit five models per day.\\
 This report will describe our reflexions on the subject and what submission we made.
 \subsection*{The data sets}
 The predictors used in the two datasets are the following :
 \begin{itemize}
-\item \emph{CategoryN} and \emph{CategoryN\_ Duration} with $N\in \{ I, II, III\} $ represent the number of different pages belonging to a certain category visited by the user during that session and the time spent in that category.\\
+\item \emph{CategoryN} and \emph{CategoryN\_ Duration} with $N\in \{ I, II, III\} $ represent the number of different pages belonging to a certain category visited by the user during that session and the time spent in that particular category.\\
 $I=$ account management pages.\\
 $II=$ website, communication and address information pages.\\
-$III=$ product related page. 
-\item \emph{Bounce rate}, \emph{Exit rate} and \emph{Page value} are metrics provided by "Google Analytics" for each pages in e-commerce.\\
+$III=$ products related pages. 
+\item \emph{Bounce rate}, \emph{Exit rate} and \emph{Page value} are metrics provided by "Google Analytics" for each pages in e-commerce websites.\\
 \emph{Bounce rate} is the number of single pages viewed by user (meaning the user exits the website on the same page he entered it, without navigating the site further).\\
 \emph{Exit rate} tells from which page the users exit the website the most.\\
 \emph{Page value} is the number of pages that a user visited before completing a transaction.
@@ -34,26 +35,73 @@ $III=$ product related page.
 \item \emph{OS} and \emph{Browser} are the exploitation system and the browser used by the user.
 \item \emph{Region} is the geographic region where the user started his session.
 \item \emph{TrafficType} is the traffic source from which the user entered the website.
-\item \emph{VisitorType} indicates whether if the user is returning or new.
-\item \emph{Transaction} indicates if a transaction has been completed. It is the value we will try to predict on our models.
+\item \emph{VisitorType} indicates whether if the user is a returning one or a new one.
+\item \emph{Transaction} indicates if a transaction has been completed. It is the value we will try to predict via our models.
 \end{itemize} 
 
 \newpage
 \section*{Methodology}
 \subsection*{Brainstorming}
-Before anything else, we tried to think logically about the predictors. We ordered them from most to least important. We came up with a list that helped us build our first naive models.
-\subsection*{Crossvalidation and useful functions}
-The first thing we did in $R$ was to implement various function that would made our experimentation easier. We so implemented three functions :
+Before anything else, we tried to think logically about the predictors. We ordered them from most to least important. We came up with a list that helped us build our first simple models.
+\subsection*{Cross-validation and useful functions}
+The first thing we did in $R$ was to implement various functions that made our experimentation easier. We implemented three functions :
 \begin{itemize}
-\item \textbf{submit\_ prediticion}(\emph{model}) that, given the parameter \emph{model} being a anonymous function, returns a model, use it to predict our testing set's \emph{Transaction} value and write that prediction next to the matching \emph{Id}'s in a .csv file for submitting on Kaggle.
+\item \textbf{submit\_ prediticion}(\emph{model}) that, given the parameter \emph{model} being an anonymous function, returns a model, use it to predict our testing set \emph{Transaction} value and write that prediction next to the matching \emph{Id}'s in a .csv file for submitting on Kaggle.
 \item \textbf{f1\_ score}(\emph{prediction}) that given a prediction over the training set, evaluates the $F1$-$score$ of that prediction.
-\item \textbf{crossvalid}(\emph{model, nrep, print}). This functions performs a 10-fold cross validation of the model $model$ a number $nrep$ of time over the training set and returns the mean $F1$-$score$. The argument $print$ serves a debugging purpose.
+\item \textbf{crossvalid}(\emph{model, nrep, print}). This functions performs a 10-fold cross-validation of the model $model$ a number $nrep$ of time over the training set and returns the mean $F1$-$score$. The argument $print$ serves a debugging purpose.
 \end{itemize}
 \subsection*{Data pre-processing}
+We started our experiments by taking a deeper look at the data. We started analyzing every individual factors to see how they correlate to the \emph{Transaction} value. We so generated one of the following plot for every predictor.\\
 
-
+\begin{figure}[h]
+\centering
+\includegraphics[scale=1]{../CategoryIII.png}
+\caption{Plot generated to see CategoryIII impact on Transaction}
+\end{figure}
+\noindent This allowed us to get a clearer view of the predictor's impact on our models.\\
+Using loops, we also computed, for every non-numeric variable, which values yielded the most completed transaction percentage. We then factored those predictor according to these results.\\
+Finally we plotted the $Month$ predictor to see when were the users the most likely to complete a $Transaction$.
+\subsection*{Linear regression}
+Our first models were built using linear regression. We tried to regress using our best predictors. \\
+Then, since the number of predictors seemed managable, we tried to bruteforce every combination of predictors to see which would lead to the best model. This is not a good approach on itself, but we also kept track of the impact of every predictor on every model's $F1$-$score$. After two hours of computation, we obtained a good regression model and a third view on which predictor would be useful for further modelling.
+\subsection*{Non-linear regressions}
+After trying linear regression, we tried to use higher order regressions, limitting our predictor set to the 10 best predictors we found during our bruteforcing.\\
+Since that resulted in a lowest number of predictor, we used the same bruteforcing function to yield a good non-linear regression using those predictors.
+\subsection*{Decision tree}
+The last approach we took was to build a model based on decision tree using the $rpart$ library.
 \newpage
 \section*{Results and Discussion}
+\subsection*{Cross-validation}
+Cross-validation was a great tool to help us build strong models. Every model we built was automatically cross-validated and our submissions were based on the $F1$-$score$ given by our \textbf{crossvalidate} function.
+\subsection*{Data pre-processing}
+Our plotting on the month variable allowed us to see that certain month were most likely to lead to a completed transaction than some others (November, October, September)
+\begin{figure}[h]
+\centering
+\includegraphics[scale=1]{../months.png}
+\caption{Percentage of transaction completed for each months}
+\end{figure}
+
+\subsection*{Linear regression}
+Our linear regression bruteforcing gave us decent first models. But most importantly, it showed us that the most accuracy increasing predictors were $CategoryI$, $CategoryI\_ Duration$, $CategoryII$, $CategoryII\_ Duration$, $CategoryIII$, $CategoryIII\_ Duration$, $Bounce\_ rate$, $Exit\_ Rate$, $Page\_ value$ and $Month$.
+The exact result for this model got erased but it gave us our lowest score on the competition page.
+\newpage 
+\subsection*{Non-linear regressions}
+The results with higher order predictors were better than without. The best combination of predictors we found was :\\
+$Transaction ~ CategoryI + CategoryI^2 + CategoryI\_ Duration + CategoryI\_ Duration^2 + CategoryII^2 + CategoryII\_ Duration + CategoryII\_ Duration^2 + CategoryIII^2 + CategoryIII\_ Duration^2 + Bounce\_ Rate + Exit\_ Rate + Exit\_ Rate^2 + Page\_ Value + Page\_ Value^2 + Month$.
+Submitting this model yielded our second best score : $0.88278$
+\subsection*{Decision tree}
+Finally, we experimented a bit with decision trees. Using the $rpart$ library and our factored data, we built the following model : \\
+\begin{figure}[h]
+\centering
+\includegraphics[scale=1]{../dec_tree.png}
+\caption{Our decision tree model}
+\end{figure}
+\noindent 
+This model seemed accurate since it takes it's first decisions on factors that we already aknowledged as being important in the classification process.
+Submitting this model yielded our best score : $0.89568$
 \newpage
 \section*{Conclusion}
+The best method we used was the decision tree. The model we built showed us that focusing on increasing the page value and the bounce rate was the best way to lead users to complete a transaction. 
+Figure 2 also showed us that May, July, August, September and November were the months were an higher percentage of online shopper actually bought something online.
+Finally, a higher number of product related page visited by the users leads to more transaction. e-commerce website should empathize on making their product related pages apealing and easy to navigate in order to sell more.
 \end{document}

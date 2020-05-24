@@ -1,20 +1,9 @@
-#library(tidyverse) # utility functions
+library(tidyverse) # utility functions
 library(rpart) # for regression trees
-library(randomForest) # for random forests
 library(rpart.plot)
 library(dplyr)
-library(ipred)
-library(plyr)
-library(caret)
-
-###check if needed
 library(ggplot2)
-library(gmodels)
-library(corrplot)
-library(caret)
-library(fpc)
-library(data.table)
-library(cluster)
+
 
 
 dlearn <- read.csv('data/Dlearn.csv')
@@ -123,6 +112,84 @@ f1score <- function(data, pred) { #https://en.wikipedia.org/wiki/F1_score
 }
 
 ######################################## WORKSPACE ######################################## 
+
+# See predictor difference between transaction and no transaction
+dlearn %>% 
+  ggplot() +
+  aes(x = predictor) +
+  geom_bar() +
+  facet_grid(Transaction ~ .,
+             scales = "free_y")
+
+# Non numeric predictor factoring 
+month_table <- table(dlearn$Month, dlearn$Transaction)
+month_tab <- as.data.frame(prop.table(month_table, 2))
+colnames(month_tab) <-  c("Month", "Transaction", "perc")
+
+ggplot(data = month_tab, aes(x = Month, y = perc, fill = Transaction)) + 
+  geom_bar(stat = 'identity', position = 'dodge', alpha = 2/3) + 
+  xlab("Month")+
+  ylab("Percent")
+
+# Factoring OS
+total_rows = rep(0, length(unique(dlearn$OS)))
+total_positive = rep(0, length(unique(dlearn$OS)))
+for(i in 1:nrow(dlearn)) {
+  total_rows[dlearn$OS[i]] = total_rows[dlearn$OS[i]] + 1
+  
+  if(dlearn$Transaction[i] == 1) {
+    total_positive[dlearn$OS[i]] = total_positive[dlearn$OS[i]] + 1
+  }
+}
+print(sort(total_positive/total_rows, index.return=TRUE)$ix)
+dlearn_transformed$OS <- factor(dlearn_transformed$OS, order = TRUE, levels = c(6,3,4,1,2,5,7,8))
+
+#Factoring browser
+total_rows = rep(0, length(unique(dlearn$Browser)))
+total_positive = rep(0, length(unique(dlearn$Browser)))
+for(i in 1:nrow(dlearn)) {
+  total_rows[dlearn$Browser[i]] = total_rows[dlearn$Browser[i]] + 1
+  
+  if(dlearn$Transaction[i] == 1) {
+    total_positive[dlearn$Browser[i]] = total_positive[dlearn$Browser[i]] + 1
+  }
+}
+for(i in 1:length(unique(dlearn$Browser))){
+  if(total_rows[i]==0)
+    total_rows[i]==1
+  if(is.na(total_rows[i])){
+    total_rows[i]==1
+  }
+}
+print(sort(total_positive/total_rows, index.return=TRUE)$ix)
+dlearn_transformed$Browser <- factor(dlearn_transformed$Browser, order = TRUE, levels = c(13,9,3,6,2,1,10,8,4,5,7,11,12))
+
+#Factoring regions
+total_rows = rep(0, length(unique(dlearn$Region)))
+total_positive = rep(0, length(unique(dlearn$Region)))
+for(i in 1:nrow(dlearn)) {
+  total_rows[dlearn$Region[i]] = total_rows[dlearn$Region[i]] + 1
+  
+  if(dlearn$Transaction[i] == 1) {
+    total_positive[dlearn$Region[i]] = total_positive[dlearn$Region[i]] + 1
+  }
+}
+print(sort(total_positive/total_rows, index.return=TRUE)$ix)
+dlearn_transformed$Region <- factor(dlearn_transformed$Region, order = TRUE, levels = c(8,6,7,3,4,9,1,2,5))
+
+#Factoring traffictype
+total_rows = rep(0, length(unique(dlearn$TrafficType)))
+total_positive = rep(0, length(unique(dlearn$TrafficType)))
+for(i in 1:nrow(dlearn)) {
+  total_rows[dlearn$TrafficType[i]] = total_rows[dlearn$TrafficType[i]] + 1
+  
+  if(dlearn$Transaction[i] == 1) {
+    total_positive[dlearn$TrafficType[i]] = total_positive[dlearn$TrafficType[i]] + 1
+  }
+}
+print(sort(total_positive/total_rows, index.return=TRUE)$ix)
+dlearn_transformed$TrafficType <- factor(dlearn_transformed$TrafficType, order = TRUE, levels = c(12,14,15,16,17,18,19,13,3,9,1,6,4,10,2,11,5,20,7,8))
+
 #Linear regression
 linear_fit <- function(data){
   test.fit <- lm(Transaction ~ CategoryI_Duration + CategoryII + CategoryII_Duration + CategoryIII + CategoryIII_Duration + Exit_Rate + Page_Value + SpecialDay + Month + OS + TrafficType + VisitorType + Weekend, data=data)
@@ -218,11 +285,6 @@ brute_force_lm_higher_dim <- function(){
     }
   }
 }
-
-dlearn_transformed$OS <- factor(dlearn_transformed$OS, order = TRUE, levels = c(6,3,7,1,5,2,4,8))
-dlearn_transformed$Browser <- factor(dlearn_transformed$Browser, order = TRUE, levels = c(9,3,6,7,1,2,8,11,4,5,10,13,12))
-dlearn_transformed$Region <- factor(dlearn_transformed$Region, order = TRUE, levels = c(8,6,3,4,7,1,5,2,9))
-dlearn_transformed$TrafficType <- factor(dlearn_transformed$TrafficType, order = TRUE, levels = c(12,15,17,18,13,19,3,9,1,6,4,14,11,10,5,2,20,8,7,16))
 
 tree.test <- rpart(Transaction ~ ., data=dlearn_transformed, method="class")
 rpart.plot(tree.test)
