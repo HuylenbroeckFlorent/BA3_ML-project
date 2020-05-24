@@ -1,0 +1,59 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+
+\title{Machine Learning - Project 2020 report\\
+\small Predicting online purchasing intention}
+\author{Florent HUYLENBROECK\\
+Laurent BOSSART}
+
+\begin{document}
+\maketitle
+\newpage
+\section*{Introduction}
+The goal of this project was to produce on the basis of various predictors the best model to predict if a session on an e-commerce website will lead to a purchase.
+This project took the form of a competition hosted on \url{ https://www.kaggle.com}. \\
+In groups of two, we had been given two dataset, one for training and one for testing, a short explaination of the different predictors and a way to measure our model's efficiency (the \emph{F-1 score}). We were able to submit five model per day.\\
+This report will describe our reflexions on the subject and what submission we made.
+\subsection*{The data sets}
+The predictors used in the two datasets are the following :
+\begin{itemize}
+\item \emph{CategoryN} and \emph{CategoryN\_ Duration} with $N\in \{ I, II, III\} $ represent the number of different pages belonging to a certain category visited by the user during that session and the time spent in that category.\\
+$I=$ account management pages.\\
+$II=$ website, communication and address information pages.\\
+$III=$ product related page. 
+\item \emph{Bounce rate}, \emph{Exit rate} and \emph{Page value} are metrics provided by "Google Analytics" for each pages in e-commerce.\\
+\emph{Bounce rate} is the number of single pages viewed by user (meaning the user exits the website on the same page he entered it, without navigating the site further).\\
+\emph{Exit rate} tells from which page the users exit the website the most.\\
+\emph{Page value} is the number of pages that a user visited before completing a transaction.
+\item \emph{SpecialDay}, \emph{Weekend} and \emph{Month} all give information on the date when the session started.\\
+\emph{SpecialDay} indicates the closeness of the site visiting time to a special day.\\
+\emph{Weekend} tells if the session started during a saturday or a sunday.
+\emph{Month} is the month of the visit date.
+\item \emph{OS} and \emph{Browser} are the exploitation system and the browser used by the user.
+\item \emph{Region} is the geographic region where the user started his session.
+\item \emph{TrafficType} is the traffic source from which the user entered the website.
+\item \emph{VisitorType} indicates whether if the user is returning or new.
+\item \emph{Transaction} indicates if a transaction has been completed. It is the value we will try to predict on our models.
+\end{itemize} 
+
+\newpage
+\section*{Methodology}
+\subsection*{Brainstorming}
+Before anything else, we tried to think logically about the predictors. We ordered them from most to least important. We came up with a list that helped us build our first naive models.
+\subsection*{Crossvalidation and useful functions}
+The first thing we did in $R$ was to implement various function that would made our experimentation easier. We so implemented three functions :
+\begin{itemize}
+\item \textbf{submit\_ prediticion}(\emph{model}) that, given the parameter \emph{model} being a anonymous function, returns a model, use it to predict our testing set's \emph{Transaction} value and write that prediction next to the matching \emph{Id}'s in a .csv file for submitting on Kaggle.
+\item \textbf{f1\_ score}(\emph{prediction}) that given a prediction over the training set, evaluates the $F1$-$score$ of that prediction.
+\item \textbf{crossvalid}(\emph{model, nrep, print}). This functions performs a 10-fold cross validation of the model $model$ a number $nrep$ of time over the training set and returns the mean $F1$-$score$. The argument $print$ serves a debugging purpose.
+\end{itemize}
+\subsection*{Data pre-processing}
+
+
+\newpage
+\section*{Results and Discussion}
+\newpage
+\section*{Conclusion}
+\end{document}
